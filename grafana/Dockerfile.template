@@ -1,8 +1,14 @@
 FROM balenalib/%%BALENA_MACHINE_NAME%%:buster
 
+RUN pwd
+
 COPY ./grafana.ini /usr/share/grafana/conf/custom.ini
 COPY ./provisioning /usr/src/app/provisioning
+WORKDIR /usr/src/app
 COPY ./*.sh /usr/src/app/
+COPY ./api.sh /usr/src/app/api.sh
+COPY ./download.sh /usr/src/app/download.sh
+COPY ./entry.sh /usr/src/app/entry.sh
 
 RUN install_packages \
       fontconfig-config \
@@ -12,8 +18,11 @@ RUN install_packages \
       jq \
       wget
 
-RUN chmod +x /usr/src/app/download.sh && /usr/src/app/download.sh "%%BALENA_MACHINE_NAME%%"
+WORKDIR /usr/src/app
+RUN wget -O /tmp/grafana.deb https://dl.grafana.com/oss/release/grafana-rpi_6.2.5_armhf.deb
+RUN chmod +x /usr/src/app/api.sh
+RUN chmod +x /usr/src/app/entry.sh
 
 RUN dpkg -i /tmp/grafana.deb && rm /tmp/grafana.deb
 
-CMD ["/bin/sh","/usr/src/app/entry.sh"]
+CMD ["/usr/src/app/entry.sh"]
